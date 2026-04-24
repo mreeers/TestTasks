@@ -1,0 +1,49 @@
+# Build artifacts
+**/bin/
+**/obj/
+**/out/
+**/TestResults/
+
+# Visual Studio / Rider / VS Code
+.vs/
+**/.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+**/packages/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Logs and runtime files
+logs/
+**/logs/
+*.log
+*.pid
+
+# Coverage
+coverage/
+*.coverage
+*.coveragexml
+coverage*.xml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment / secrets
+.env
+.env.*
+appsettings.*.local.json
+secrets.json
+
+# Docker local overrides
+docker-compose.override.yml
