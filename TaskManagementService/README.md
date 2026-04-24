@@ -491,11 +491,11 @@ docker compose down -v
 
 `Observer` пишет логи в файл по пути:
 
-- `logs/<yyyy-MM-dd>/observer.log`
+- `logs/<dd-MM-yyyy>/observer.log`
 
 Например:
 
-- `logs/2026-04-24/observer.log`
+- `logs/24-04-2026/observer.log`
 
 Для отдельной сборки Observer можно использовать скрипт:
 

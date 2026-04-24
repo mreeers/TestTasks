@@ -4,7 +4,7 @@ using TaskManagement.Observer.Infrastructure;
 using TaskManagement.Observer.Consumers;
 
 var builder = WebApplication.CreateBuilder(args);
-var observerLogDirectory = Path.Combine("logs", DateTime.Now.ToString("yyyy-MM-dd"));
+var observerLogDirectory = Path.Combine("logs", DateTime.Now.ToString("dd-MM-yyyy"));
 Directory.CreateDirectory(observerLogDirectory);
 var observerLogFilePath = Path.Combine(observerLogDirectory, "observer.log");
 builder.Host.UseSerilog((context, loggerConfiguration) =>
