@@ -33,6 +33,15 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
 
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: taskmanagement-jaeger
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+
   observer:
     build:
       context: .
@@ -44,6 +53,7 @@ services:
       RabbitMq__Port: 5672
       RabbitMq__Username: proxmox
       RabbitMq__Password: proxmox
+      Otlp__Endpoint: http://jaeger:4317
     ports:
       - "5080:8080"
     depends_on:
@@ -63,6 +73,7 @@ services:
       RabbitMq__Username: proxmox
       RabbitMq__Password: proxmox
       Observer__BaseUrl: http://observer:8080
+      Otlp__Endpoint: http://jaeger:4317
     ports:
       - "5000:8080"
     depends_on:
@@ -71,6 +82,8 @@ services:
       rabbitmq:
         condition: service_healthy
       observer:
+        condition: service_started
+      jaeger:
         condition: service_started
 
 volumes:

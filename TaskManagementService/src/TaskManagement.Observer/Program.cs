@@ -1,4 +1,6 @@
 using MassTransit;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Serilog;
 using TaskManagement.Observer.Infrastructure;
 using TaskManagement.Observer.Consumers;
@@ -18,6 +20,18 @@ builder.Host.UseSerilog((context, loggerConfiguration) =>
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+var otlpEndpoint = builder.Configuration["Otlp:Endpoint"] ?? "http://localhost:4317";
+builder.Services
+    .AddOpenTelemetry()
+    .WithTracing(tracingBuilder =>
+    {
+        tracingBuilder
+            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("TaskManagement.Observer"))
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddSource("MassTransit")
+            .AddOtlpExporter(options => { options.Endpoint = new Uri(otlpEndpoint); });
+    });
 
 var rabbitHost = builder.Configuration["RabbitMq:Host"] ?? "localhost";
 var rabbitPort = int.TryParse(builder.Configuration["RabbitMq:Port"], out var parsedRabbitPort)
@@ -67,12 +81,10 @@ app.Lifetime.ApplicationStarted.Register(() =>
         ==================== Локальный запуск ====================
         Сервис: TaskManagement.Observer
         Observer: {ObserverUrls}
-        API Swagger: {ApiSwaggerUrl}
         RabbitMQ UI: {RabbitMqUiUrl}
         =========================================================================
         """,
         string.Join(", ", app.Urls),
-        "http://localhost:5000/swagger",
         rabbitMqUiUrl);
 });
 

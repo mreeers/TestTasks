@@ -2,6 +2,8 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Serilog;
 using TaskManagement.API.Infrastructure;
 using TaskManagement.API.Services;
@@ -34,6 +36,20 @@ builder.Services.AddHttpClient("ObserverClient", client =>
     var baseUrl = builder.Configuration["Observer:BaseUrl"] ?? "http://localhost:5080";
     client.BaseAddress = new Uri(baseUrl);
 });
+
+var otlpEndpoint = builder.Configuration["Otlp:Endpoint"] ?? "http://localhost:4317";
+builder.Services
+    .AddOpenTelemetry()
+    .WithTracing(tracingBuilder =>
+    {
+        tracingBuilder
+            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("TaskManagement.API"))
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddEntityFrameworkCoreInstrumentation()
+            .AddSource("MassTransit")
+            .AddOtlpExporter(options => { options.Endpoint = new Uri(otlpEndpoint); });
+    });
 
 var rabbitHost = builder.Configuration["RabbitMq:Host"] ?? "localhost";
 var rabbitPort = int.TryParse(builder.Configuration["RabbitMq:Port"], out var parsedRabbitPort)

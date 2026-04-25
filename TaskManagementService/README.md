@@ -51,8 +51,9 @@ docker compose ps
 ### 5) Куда заходить после старта
 
 - Swagger API: `http://localhost:5000/swagger`
-- Observer: `http://localhost:5080`
+- Observer: `http://localhost:5080` (у Observer нет отдельного Swagger UI)
 - RabbitMQ UI: `http://localhost:15672` (`proxmox/proxmox`)
+- Jaeger UI: `http://localhost:16686`
 
 ### 6) Минимальная проверка функционала (smoke test)
 
@@ -472,6 +473,7 @@ docker compose logs observer
 - API (Swagger): `http://localhost:5000/swagger`
 - Observer: `http://localhost:5080`
 - RabbitMQ UI: `http://localhost:15672` (`proxmox/proxmox`)
+- Jaeger UI: `http://localhost:16686`
 
 ### Остановка
 
@@ -501,5 +503,79 @@ docker compose down -v
 
 ```powershell
 .\scripts\build-observer.ps1
+```
+
+---
+
+## 18. OpenTelemetry (Jaeger)
+
+В проект добавлена трассировка OpenTelemetry для `TaskManagement.API` и `TaskManagement.Observer`.
+
+Что трассируется:
+
+- входящие HTTP-запросы (`AspNetCore`);
+- исходящие HTTP-вызовы (`HttpClient`);
+- события MassTransit (`AddSource("MassTransit")`);
+- запросы EF Core в API (`EntityFrameworkCoreInstrumentation`).
+
+Экспорт трасс:
+
+- через OTLP (`Otlp:Endpoint`);
+- по умолчанию в Docker Compose endpoint направлен в Jaeger: `http://jaeger:4317`.
+
+### Как посмотреть трассы
+
+1. Подними стек:
+
+```bash
+docker compose up -d --build
+```
+
+2. Открой UI Jaeger:
+
+- `http://localhost:16686`
+
+3. Выбери сервис:
+
+- `TaskManagement.API` или `TaskManagement.Observer`
+
+4. Выполни CRUD в Swagger (`http://localhost:5000/swagger`) и проверь новые trace в Jaeger.
+
+---
+
+## 19. Деплой на удаленный Docker-хост (без GitHub)
+
+Для деплоя добавлен скрипт:
+
+- `scripts/deploy-remote.ps1`
+
+Что делает скрипт:
+
+1. Собирает чистую копию проекта (без `.git`, `.vs`, `bin`, `obj`, `logs` и служебных файлов).
+2. Отправляет проект по `scp` на удаленный сервер.
+3. Обновляет папку проекта на сервере.
+4. Выполняет `docker compose up -d --build`.
+5. Показывает URL сервисов после деплоя.
+
+### Запуск
+
+```powershell
+cd F:\Projects\TestTask\TaskManagementService
+.\scripts\deploy-remote.ps1 -ServerIp 192.168.1.174
+```
+
+Опционально можно задать путь на сервере:
+
+```powershell
+.\scripts\deploy-remote.ps1 -ServerIp 192.168.1.174 -RemotePath /opt/task-management
+```
+
+### Проверка на сервере
+
+```bash
+cd /opt/task-management
+docker compose ps
+docker compose logs --tail=100 api
+docker compose logs --tail=100 observer
 ```
 
